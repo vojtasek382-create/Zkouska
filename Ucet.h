@@ -21,7 +21,7 @@ class Ucet {
     void pridejTransakci(double hodnota);
     void pridejTransakce(const std::vector<double>& hodnoty);
 
-    virtual void analyzujUcet() const;
+    virtual void analyzujUcet() const = 0;
     virtual void vypisInfo() const;
 
 };

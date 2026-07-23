@@ -1,0 +1,312 @@
+================================================================================
+  KOMPLETNÍ ROZŠÍŘENÍ TŘÍDY BEZNYUCET O OPERÁTORY A RULE OF THREE (C++ TEXT)
+================================================================================
+
+Tento text obsahuje kompletní deklaraci (BeznyUcet.h), implementaci (BeznyUcet.cpp)
+a testovací použití v main.cpp.
+
+
+--------------------------------------------------------------------------------
+1. SOUBOR: BeznyUcet.h
+--------------------------------------------------------------------------------
+
+#pragma once
+#include "Ucet.h"
+#include <iostream>
+#include <vector>
+#include <string>
+
+class BeznyUcet : public Ucet {
+private:
+    double poplatekZaVedeni;
+    
+    // Dynamické pole vyhrazené pro ukázku Rule of Three / Five
+    // V praxi STL vector spravuje paměť sám, ale pro účely výuky
+    // ukazujeme práci s dynamickým ukazatelem.
+    double* interniKód; 
+
+public:
+    // --- KONSTRUKTORY A RULE OF THREE ---
+    BeznyUcet(std::string cisloUctu, std::vector<double> historieTransakci, double poplatek);
+    
+    // 1. Kopírovací konstruktor (Copy Constructor)
+    BeznyUcet(const BeznyUcet& druhy);
+    
+    // 2. Destruktor (Destructor)
+    virtual ~BeznyUcet() override;
+    
+    // 3. Kopírovací operátor přiřazení (Copy Assignment Operator)
+    BeznyUcet& operator=(const BeznyUcet& druhy);
+
+    // Metody z bázové třídy
+    virtual void analyzujUcet() const override;
+    virtual void vypisInfo() const override;
+
+    // --- ARITMETICKÉ OPERÁTORY ---
+    BeznyUcet operator+(double hodnota) const;
+    BeznyUcet operator-(double hodnota) const;
+    BeznyUcet operator*(double koeficient) const;
+    BeznyUcet operator/(double koeficient) const;
+    int operator%(int delitel) const; // Modulo nad celočíselnou částí poplatku
+
+    // Inkrementace a Dekrementace (Prefix / Postfix)
+    BeznyUcet& operator++();    // Prefix: ++ucet
+    BeznyUcet operator++(int);  // Postfix: ucet++
+    BeznyUcet& operator--();    // Prefix: --ucet
+    BeznyUcet operator--(int);  // Postfix: ucet--
+
+    // --- SLOŽENÉ PŘIŘAZOVACÍ OPERÁTORY ---
+    BeznyUcet& operator+=(double hodnota);
+    BeznyUcet& operator-=(double hodnota);
+
+    // --- RELAČNÍ OPERÁTORY ---
+    bool operator==(const BeznyUcet& druhy) const;
+    bool operator!=(const BeznyUcet& druhy) const;
+    bool operator<(const BeznyUcet& druhy) const;
+    bool operator>(const BeznyUcet& druhy) const;
+    bool operator<=(const BeznyUcet& druhy) const;
+    bool operator>=(const BeznyUcet& druhy) const;
+
+    // --- INDEXOVACÍ OPERÁTOR [] ---
+    // Umožňuje přistupovat k transakcím přes index, např. ucet[0]
+    double& operator[](size_t index);
+    const double& operator[](size_t index) const;
+
+    // --- OPERÁTOR FUNKČNÍHO VOLÁNÍ () ---
+    // Promění objekt ve "funktor" - např. ucet(100.0) přidá transakci
+    void operator()(double transakce);
+    double operator()(double urokovaSazba, int mesice) const; // Kalkulátor poplatků
+
+    // --- VSTUPNÍ A VÝSTUPNÍ OPERÁTORY (FRIEND) ---
+    friend std::ostream& operator<<(std::ostream& os, const BeznyUcet& ucet);
+    friend std::istream& operator>>(std::istream& is, BeznyUcet& ucet);
+};
+
+
+--------------------------------------------------------------------------------
+2. SOUBOR: BeznyUcet.cpp
+--------------------------------------------------------------------------------
+
+#include "BeznyUcet.h"
+#include <cmath>
+
+// Základní konstruktor
+BeznyUcet::BeznyUcet(std::string cisloUctu, std::vector<double> historieTransakci, double poplatek)
+    : Ucet(cisloUctu, historieTransakci), poplatekZaVedeni(poplatek) {
+    this->interniKód = new double(123.45); // Dynamická alokace pro Rule of Three
+}
+
+// 1. RULE OF THREE: Kopírovací konstruktor
+BeznyUcet::BeznyUcet(const BeznyUcet& druhy) 
+    : Ucet(druhy.cisloUctu, druhy.historieTransakci), poplatekZaVedeni(druhy.poplatekZaVedeni) {
+    // Hluboká kopie (Deep Copy) dynamické paměti
+    this->interniKód = new double(*druhy.interniKód);
+}
+
+// 2. RULE OF THREE: Destruktor
+BeznyUcet::~BeznyUcet() {
+    delete this->interniKód; // Uvolnění vyhrazené dynamické paměti
+}
+
+// 3. RULE OF THREE: Kopírovací operátor přiřazení
+BeznyUcet& BeznyUcet::operator=(const BeznyUcet& druhy) {
+    if (this != &druhy) { // Ochrana proti přiřazení sama do sebe
+        // Kopírování členů z rodiče a lokálních členů
+        this->cisloUctu = druhy.cisloUctu;
+        this->historieTransakci = druhy.historieTransakci;
+        this->poplatekZaVedeni = druhy.poplatekZaVedeni;
+
+        // Správa dynamické paměti
+        delete this->interniKód;
+        this->interniKód = new double(*druhy.interniKód);
+    }
+    return *this;
+}
+
+void BeznyUcet::analyzujUcet() const {
+    int pocetVyberu = 0;
+    for (double t : historieTransakci) {
+        if (t < 0) pocetVyberu++;
+    }
+    std::cout << "Analyza účtu " << cisloUctu << ": Pocet výběrů je " << pocetVyberu << "\n";
+}
+
+void BeznyUcet::vypisInfo() const {
+    std::cout << "Bezny Ucet: " << cisloUctu << " | Poplatek: " << poplatekZaVedeni << " Kc\n";
+}
+
+// --- ARITMETICKÉ OPERÁTORY ---
+BeznyUcet BeznyUcet::operator+(double hodnota) const {
+    return BeznyUcet(this->cisloUctu, this->historieTransakci, this->poplatekZaVedeni + hodnota);
+}
+
+BeznyUcet BeznyUcet::operator-(double hodnota) const {
+    double novyPoplatek = (this->poplatekZaVedeni - hodnota < 0) ? 0 : this->poplatekZaVedeni - hodnota;
+    return BeznyUcet(this->cisloUctu, this->historieTransakci, novyPoplatek);
+}
+
+BeznyUcet BeznyUcet::operator*(double koeficient) const {
+    return BeznyUcet(this->cisloUctu, this->historieTransakci, this->poplatekZaVedeni * koeficient);
+}
+
+BeznyUcet BeznyUcet::operator/(double koeficient) const {
+    if (koeficient == 0) return *this;
+    return BeznyUcet(this->cisloUctu, this->historieTransakci, this->poplatekZaVedeni / koeficient);
+}
+
+int BeznyUcet::operator%(int delitel) const {
+    if (delitel == 0) return 0;
+    return static_cast<int>(this->poplatekZaVedeni) % delitel;
+}
+
+// --- INKREMENTACE / DEKREMENTACE ---
+BeznyUcet& BeznyUcet::operator++() { // Prefix (++ucet)
+    this->poplatekZaVedeni += 1.0;
+    return *this;
+}
+
+BeznyUcet BeznyUcet::operator++(int) { // Postfix (ucet++)
+    BeznyUcet docasny = *this;
+    this->poplatekZaVedeni += 1.0;
+    return docasny;
+}
+
+BeznyUcet& BeznyUcet::operator--() { // Prefix (--ucet)
+    if (this->poplatekZaVedeni >= 1.0) this->poplatekZaVedeni -= 1.0;
+    return *this;
+}
+
+BeznyUcet BeznyUcet::operator--(int) { // Postfix (ucet--)
+    BeznyUcet docasny = *this;
+    if (this->poplatekZaVedeni >= 1.0) this->poplatekZaVedeni -= 1.0;
+    return docasny;
+}
+
+// --- SLOŽENÉ PŘIŘAZOVACÍ OPERÁTORY ---
+BeznyUcet& BeznyUcet::operator+=(double hodnota) {
+    this->pridejTransakci(hodnota);
+    return *this;
+}
+
+BeznyUcet& BeznyUcet::operator-=(double hodnota) {
+    this->pridejTransakci(-hodnota); // Výběr uloží jako záporné číslo
+    return *this;
+}
+
+// --- RELAČNÍ OPERÁTORY ---
+bool BeznyUcet::operator==(const BeznyUcet& druhy) const {
+    return (this->poplatekZaVedeni == druhy.poplatekZaVedeni) && (this->cisloUctu == druhy.cisloUctu);
+}
+
+bool BeznyUcet::operator!=(const BeznyUcet& druhy) const {
+    return !(*this == druhy);
+}
+
+bool BeznyUcet::operator<(const BeznyUcet& druhy) const {
+    return this->poplatekZaVedeni < druhy.poplatekZaVedeni;
+}
+
+bool BeznyUcet::operator>(const BeznyUcet& druhy) const {
+    return this->poplatekZaVedeni > druhy.poplatekZaVedeni;
+}
+
+bool BeznyUcet::operator<=(const BeznyUcet& druhy) const {
+    return !(*this > druhy);
+}
+
+bool BeznyUcet::operator>=(const BeznyUcet& druhy) const {
+    return !(*this < druhy);
+}
+
+// --- INDEXOVACÍ OPERÁTOR [] ---
+double& BeznyUcet::operator[](size_t index) {
+    return this->historieTransakci.at(index); // Kontroluje meze pole
+}
+
+const double& BeznyUcet::operator[](size_t index) const {
+    return this->historieTransakci.at(index);
+}
+
+// --- OPERÁTOR FUNKČNÍHO VOLÁNÍ () ---
+void BeznyUcet::operator()(double transakce) {
+    this->pridejTransakci(transakce);
+}
+
+double BeznyUcet::operator()(double urokovaSazba, int mesice) const {
+    return (this->poplatekZaVedeni * (urokovaSazba / 100.0)) * mesice;
+}
+
+// --- STREAM OPERÁTORY ---
+std::ostream& operator<<(std::ostream& os, const BeznyUcet& ucet) {
+    os << "Účet " << ucet.cisloUctu << " [Poplatek: " << ucet.poplatekZaVedeni 
+       << " Kč, Transakcí: " << ucet.historieTransakci.size() << "]";
+    return os;
+}
+
+std::istream& operator>>(std::istream& is, BeznyUcet& ucet) {
+    std::cout << "Zadejte cislo uctu: ";
+    is >> ucet.cisloUctu;
+    std::cout << "Zadejte poplatek za vedeni: ";
+    is >> ucet.poplatekZaVedeni;
+    return is;
+}
+
+
+--------------------------------------------------------------------------------
+3. SOUBOR: main.cpp (Testování všech operátorů)
+--------------------------------------------------------------------------------
+
+#include <iostream>
+#include "BeznyUcet.h"
+
+int main() {
+    BeznyUcet u1("CZ-1001", {1000.0, -200.0, 500.0}, 50.0);
+    BeznyUcet u2("CZ-1002", {300.0}, 30.0);
+
+    std::cout << "=== VÝPIS CEZ OPERÁTOR << ===" << std::endl;
+    std::cout << "u1: " << u1 << std::endl;
+    std::cout << "u2: " << u2 << std::endl;
+
+    std::cout << "\n=== INDEXOVACÍ OPERÁTOR [] ===" << std::endl;
+    std::cout << "První transakce na u1: " << u1[0] << " Kč" << std::endl;
+    u1[0] = 1200.0; // Úprava transakce přes reference
+    std::cout << "Upravená první transakce u1: " << u1[0] << " Kč" << std::endl;
+
+    std::cout << "\n=== OPERÁTORY += A -= ===" << std::endl;
+    u1 += 300.0; // Vklad
+    u1 -= 150.0; // Výběr
+    std::cout << "u1 po += 300 a -= 150: " << u1 << std::endl;
+
+    std::cout << "\n=== ARITMETICKÉ OPERÁTORY (+, -, *, /, %) ===" << std::endl;
+    BeznyUcet uPlus = u1 + 20.0;
+    BeznyUcet uNasobek = u1 * 1.5;
+    std::cout << "u1 + 20 Kč poplatek: " << uPlus << std::endl;
+    std::cout << "u1 * 1.5 poplatek: " << uNasobek << std::endl;
+    std::cout << "Poplatek u1 % 7: " << (u1 % 7) << std::endl;
+
+    std::cout << "\n=== INKREMENTACE A DEKREMENTACE (++ / --) ===" << std::endl;
+    std::cout << "Před prefixem ++: " << u1 << std::endl;
+    ++u1;
+    std::cout << "Po prefixu ++: " << u1 << std::endl;
+
+    std::cout << "\n=== RELAČNÍ OPERÁTORY (==, !=, <, >, <=, >=) ===" << std::endl;
+    if (u1 > u2) {
+        std::cout << "Účet u1 má vyšší poplatek než u2." << std::endl;
+    }
+
+    std::cout << "\n=== OPERÁTOR FUNKČNÍHO VOLÁNÍ () [FUNKTOR] ===" << std::endl;
+    u1(5000.0); // Zavolá u1 jako funkci - přidá vklad 5000
+    std::cout << "u1 po zavolání u1(5000.0): " << u1 << std::endl;
+    std::cout << "Odhad poplatků u1 za 6 měsíců při 2%: " << u1(2.0, 6) << " Kč" << std::endl;
+
+    std::cout << "\n=== RULE OF THREE (KOPÍROVÁNÍ A PŘIŘAZENÍ) ===" << std::endl;
+    BeznyUcet uKopie = u1; // Test kopírovacího konstruktoru
+    BeznyUcet uPrirazeny("CZ-0000", {}, 0.0);
+    uPrirazeny = u1;       // Test operátoru přiřazení (=)
+    std::cout << "Kopie u1: " << uKopie << std::endl;
+    std::cout << "Přiřazený u1: " << uPrirazeny << std::endl;
+
+    // std::cin >> u1; // Odkomentuj pro otestování načítání z konzole přes operátor >>
+
+    return 0;
+}

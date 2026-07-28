@@ -88,5 +88,5 @@ Otázka 3: KOLIK ARGUMENTŮ MÁ V ZÁVORCE (...) ?
    MojeTrida ucet;
    ucet(); // Spustí operator()()
 
-void nejvetsi_rada(Ucet& nazevUctu){
-    std::vector<double>& historie = nazevUctu.gethistorieTransakci();
+void nejvetsi_rada(Vozidlo& nazevUctu){
+    std::vector<double>& historie = nazevUctu.gethistorieTankovani();

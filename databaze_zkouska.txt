@@ -1,0 +1,165 @@
+#pragma once
+
+#include <iostream>
+#include <string>
+
+class Vybaveni {
+
+    protected:
+    std::string kodOznaceni;
+    double hmotnost;
+    static int pocetKusu;
+
+    public:
+    Vybaveni(std::string kodOznaceni, double hmotnost);
+    virtual ~Vybaveni();
+    static int getpocetKusu();
+    virtual void pripravKAkci() = 0;
+    friend std::ostream& operator<<(std::ostream& os, const Vybaveni& v);
+
+
+
+};
+
+#include <iostream>
+#include <string>
+#include "Vybaveni.h"
+
+int Vybaveni::pocetKusu = 0;
+
+Vybaveni::Vybaveni(std::string kodOznaceni, double hmotnost){
+    this->kodOznaceni = kodOznaceni;
+    this->hmotnost = hmotnost;
+    pocetKusu++;
+}
+
+Vybaveni::~Vybaveni(){
+    pocetKusu--;
+}
+
+int Vybaveni::getpocetKusu(){
+    return pocetKusu;
+}
+
+std::ostream& operator<<(std::ostream& os, const Vybaveni& v) {
+    os << v.kodOznaceni << " (hmotnost: " << v.hmotnost << " kg)";
+    return os;
+}
+
+#pragma once
+
+#include <iostream>
+#include <string>
+#include "Vybaveni.h"
+
+class PalnaZbran : public Vybaveni {
+
+    private:
+    int kadence;
+
+    public:
+    PalnaZbran(std::string kodOznaceni, double hmotnost, int kadence);
+    void pripravKAkci() override;
+    PalnaZbran operator+(const PalnaZbran& druha) const;
+
+};
+
+#include <iostream>
+#include <string>
+#include "PalnaZbran.h"
+
+PalnaZbran::PalnaZbran(std::string kodOznaceni, double hmotnost, int kadence): Vybaveni(kodOznaceni, hmotnost){
+    this->kadence = kadence;
+}
+
+void PalnaZbran::pripravKAkci() {
+    std::cout << "* Nabijeni zbrane " << kodOznaceni << ", nastaveni kadence na " << kadence << " ran/min. *" << std::endl;
+}
+
+PalnaZbran PalnaZbran::operator+(const PalnaZbran& druha) const{
+    std::string novyKod = this->kodOznaceni + " a " + druha.kodOznaceni;
+
+    double novaHmotnost = this->hmotnost + druha.hmotnost;
+
+    int novaKadence = this->kadence + druha.kadence;
+
+
+    return PalnaZbran(novyKod, novaHmotnost, novaKadence); 
+}
+
+#pragma once
+
+#include <iostream>
+#include <string>
+#include "Vybaveni.h"
+
+class BalistickaOchrana : public Vybaveni{
+
+    private:
+    int tridaOdolnosti;
+
+    public:
+    BalistickaOchrana(std::string kodOznaceni, double hmotnost, int tridaOdolnosti);
+    void pripravKAkci() override;
+    
+};
+
+#include <iostream>
+#include <string>
+#include "BalistickaOchrana.h"
+
+BalistickaOchrana::BalistickaOchrana(std::string kodOznaceni, double hmotnost, int tridaOdolnosti) : Vybaveni(kodOznaceni, hmotnost){
+    this->tridaOdolnosti = tridaOdolnosti;
+}
+
+void BalistickaOchrana::pripravKAkci() {
+    std::cout << "* Kontrola celistvosti balisticke ochrany " << kodOznaceni << " (trida odolnosti: T" << tridaOdolnosti << "). *" << std::endl;
+}
+
+#include <iostream>
+#include <string>
+#include "Vybaveni.h"
+#include "PalnaZbran.h"
+#include "BalistickaOchrana.h"
+
+int main(void) {
+    // 1. Pocatecni pocet
+    std::cout << "Pocatocni pocet kusu vybaveni: " << Vybaveni::getpocetKusu() << std::endl << std::endl;
+
+    // 2. Vytvoreni vybaveni
+    std::cout << "--- Vytvoreni vojenskeho vybaveni ---" << std::endl;
+    Vybaveni* sklad[3];
+
+    // Upozornění: kód vesty na fotce je "Vesta-NIJ4" a hmotnost je bez mezer na začátku
+    sklad[0] = new PalnaZbran("M4A1", 3.5, 800);
+    sklad[1] = new PalnaZbran("M203", 1.5, 100);
+    sklad[2] = new BalistickaOchrana("Vesta-NIJ4", 8.5, 4);
+
+    std::cout << "Aktualni pocet kusu v evidenci: " << Vybaveni::getpocetKusu() << std::endl << std::endl;
+
+    // 3. Test polymorfismu (vypisují se pouze metody pripravKAkci!)
+    std::cout << "--- Test polymorfismu ---" << std::endl;
+    for (int i = 0; i < 3; i++) {
+        sklad[i]->pripravKAkci();
+    }
+
+    // 4. Test pretizeni operatoru
+    std::cout << std::endl << "--- Test pretizeni operatoru ---" << std::endl;
+    {
+        PalnaZbran spojenaZbran = *(PalnaZbran*)sklad[0] + *(PalnaZbran*)sklad[1];
+
+        // Na fotce je před výpisem zbraně text: "Slouceny zbranovy system: "
+        std::cout << "Slouceny zbranovy system: " << spojenaZbran << std::endl;
+        spojenaZbran.pripravKAkci();
+    }
+
+    // 5. Uklid pameti
+    std::cout << std::endl << "--- Uklid pameti ---" << std::endl;
+    for (int i = 0; i < 3; i++) {
+        delete sklad[i];
+    }
+
+    std::cout << "Konecny pocet kusu v evidenci: " << Vybaveni::getpocetKusu() << std::endl;
+
+    return 0;
+}

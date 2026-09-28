@@ -1,42 +1,56 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
 #include "Vozidlo.h"
 
 int Vozidlo::pocetVozidel = 0;
 
-Vozidlo::Vozidlo(std::string spz, std::vector<double> historieTankovani){
-    this-> spz = spz;
-    this-> historieTankovani = historieTankovani;
+Vozidlo::Vozidlo(std::string spz, std::vector<double> historieJizd)
+{
+    this -> spz = spz;
+    this -> historieJizd = historieJizd;
     pocetVozidel++;
 }
 
-Vozidlo::~Vozidlo(){
+Vozidlo::~Vozidlo()
+{
     pocetVozidel--;
 }
 
-std::vector<double>& Vozidlo::gethistorieTankovani(){
-    return historieTankovani;
-}
-
-int Vozidlo::getpocetVozidel(){
+int Vozidlo::getpocetVozidel()
+{
     return pocetVozidel;
 }
 
-double Vozidlo::getAktualniTankovani() const{
-    return historieTankovani.back();
+const std::string Vozidlo::getspz()
+{
+    return spz;
 }
 
-void Vozidlo::pridejTankovani(double litry){
-    historieTankovani.push_back(litry);
+std::vector<double> &Vozidlo::gethistorieJizd()
+{
+    return historieJizd;
 }
 
-void Vozidlo::pridejTankovani(const std::vector<double>& litry){
-    for (int i = 0; i < litry.size(); i++){
-        historieTankovani.push_back(litry[i]);
+const std::vector<double> &Vozidlo::gethistorieJizd() const
+{
+    return historieJizd;
+}
+
+void Vozidlo::pridejJizdu(double hodnota)
+{
+    historieJizd.push_back(hodnota);
+}
+
+void Vozidlo::pridejJizdu(const std::vector<double> &hodnoty)
+{
+    for (int i = 0; i < hodnoty.size(); i++){
+        historieJizd.push_back(hodnoty[i]);
     }
 }
-//která vypíše SPZ a počet záznamů v historii tankování.
-void Vozidlo::vypisInfo() const{
-    std::cout << "Spz: " << spz << " | Pocet zaznamu tankovani: " << historieTankovani.size() << std::endl;
+
+void Vozidlo::vypisInfo() const
+{
+    std::cout << "Spz: " << spz << ", pocet zaznamu: " << historieJizd.size() << std::endl;
 }

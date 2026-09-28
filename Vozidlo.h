@@ -8,17 +8,21 @@ class Vozidlo{
 
     protected:
     std::string spz;
-    std::vector<double> historieTankovani;
+    std::vector<double> historieJizd;
     int static pocetVozidel;
 
     public:
-    Vozidlo(std::string spz, std::vector<double> historieTankovani);
+    Vozidlo(std::string spz, std::vector<double> historieJizd);
     virtual ~Vozidlo();
-    std::vector<double>& gethistorieTankovani();
     int static getpocetVozidel();
-    double getAktualniTankovani() const;
-    void pridejTankovani(double litry);
-    void pridejTankovani(const std::vector<double>& litry);
+    const std::string getspz();
+    std::vector<double>& gethistorieJizd();
+    const std::vector<double>& gethistorieJizd() const;
+    void pridejJizdu(double hodnota);
+    void pridejJizdu(const std::vector<double>& hodnoty);
     virtual void analyzujVozidlo() const = 0;
     virtual void vypisInfo() const;
+
+
+
 };
